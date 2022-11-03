@@ -11,6 +11,9 @@ inputs:
   phpcs_severity:
     description: 'Which severity to check for. Default: "8"'
     required: false
+  phpcs_path:
+    description: 'Path to the Magento 2 codebase. Default: "app/code/Magic42"'
+    required: false
 
 runs:
   using: 'docker'
