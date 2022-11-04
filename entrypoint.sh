@@ -23,12 +23,11 @@ echo "PHPCS report: ${PHPCS_REPORT}"
 echo "PHPCS standard: ${PHPCS_STANDARD}"
 echo "PHPCS path: ${PHPCS_PATH}"
 echo "PHPCS severity: ${PHPCS_SEVERITY}"
-echo "PHPCS severity: ${PHPCS_EXTENSIONS}"
+echo "PHPCS extensions: ${PHPCS_EXTENSIONS}"
 
 sh -c "/root/.composer/vendor/bin/phpcs \
-  ${PHPCS_PATH}
   --report=${PHPCS_REPORT} \
-  --extensions=${PHPCS_EXTENSIONS} \
+  --standard=${PHPCS_STANDARD} \
   --severity=${PHPCS_SEVERITY} \
-  --standard=$PHPCS_STANDARD $GITHUB_WORKSPACE \
-  -s $*"
+  --extensions=${PHPCS_EXTENSIONS} \
+  ${PHPCS_PATH}"
