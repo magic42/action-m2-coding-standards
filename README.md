@@ -35,6 +35,7 @@ jobs:
         with:
           tool: phpcs
           use_project_tools: 'true'
+          phpcs_warning_severity: '0'
 
   phpstan:
     runs-on: ubuntu-latest
@@ -63,6 +64,7 @@ jobs:
 | `phpcs_standard` | none | Ruleset path or installed standard. Empty = `Magento2` (legacy) or the committed `phpcs.xml.dist` (project mode). |
 | `phpcs_report` | `checkstyle` | Feeds the bundled problem matcher. |
 | `phpcs_severity` | `8` (legacy only) | Project mode defers to the committed ruleset. |
+| `phpcs_warning_severity` | none | Set to `0` to gate on errors only (L1 baseline approach). |
 | `phpcs_path` | `app/code/Magic42` (legacy only) | Project mode defers to the committed ruleset. |
 | `phpcs_extensions` | `php` (legacy only) | Project mode defers to the committed ruleset. |
 | `use_project_tools` | `false` | phpcs only: use `vendor/bin/phpcs` + committed `phpcs.xml.dist`. Requires composer install first. |

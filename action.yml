@@ -27,6 +27,11 @@ inputs:
   phpcs_severity:
     description: 'Which severity to check for. Default: "8"'
     required: false
+  phpcs_warning_severity:
+    description: >-
+      Minimum warning severity. Set to "0" to gate on errors only
+      (the magic42 L1 baseline approach). Empty = phpcs default.
+    required: false
   phpcs_path:
     description: 'Path to the Magento 2 codebase. Default: "app/code/Magic42"'
     required: false
@@ -89,6 +94,7 @@ runs:
         INPUT_PHPCS_STANDARD: ${{ inputs.phpcs_standard }}
         INPUT_PHPCS_REPORT: ${{ inputs.phpcs_report }}
         INPUT_PHPCS_SEVERITY: ${{ inputs.phpcs_severity }}
+        INPUT_PHPCS_WARNING_SEVERITY: ${{ inputs.phpcs_warning_severity }}
         INPUT_PHPCS_PATH: ${{ inputs.phpcs_path }}
         INPUT_PHPCS_EXTENSIONS: ${{ inputs.phpcs_extensions }}
         USE_PROJECT_TOOLS: ${{ inputs.use_project_tools }}
