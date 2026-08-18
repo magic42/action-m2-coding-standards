@@ -1,9 +1,25 @@
-name: 'Magento 2 Coding Style'
+name: 'Magento 2 Coding Standards'
 author: 'magic42'
-description: 'Performs php static code analysis with the Magento 2 Coding Standard'
+description: >-
+  Runs PHPCS or PHPStan against Magento 2 code as separately gateable
+  jobs. PHPMD support is pending (magic42/ansible#512).
 inputs:
+  tool:
+    description: 'Which tool to run: phpcs | phpstan | phpmd.'
+    required: false
+    default: 'phpcs'
+  php_version:
+    description: >-
+      PHP version used to set up the bundled phpcs toolchain
+      (legacy mode only).
+    required: false
+    default: '8.3'
+  # phpcs inputs (backwards-compatible with v1.x)
   phpcs_standard:
-    description: 'Path to your own PHPCS file or a specific standard. Leave empty to use "Magento2".'
+    description: >-
+      Path to your own PHPCS ruleset or an installed standard.
+      Leave empty to use "Magento2" (legacy mode) or the project's
+      committed phpcs.xml.dist (project mode).
     required: false
   phpcs_report:
     description: 'Report to output. Default: "checkstyle"'
@@ -14,9 +30,96 @@ inputs:
   phpcs_path:
     description: 'Path to the Magento 2 codebase. Default: "app/code/Magic42"'
     required: false
+  phpcs_extensions:
+    description: 'File extensions to check. Default: "php"'
+    required: false
+  use_project_tools:
+    description: >-
+      phpcs only: run the project's vendor/bin/phpcs against its
+      committed phpcs.xml.dist instead of the bundled toolchain.
+      Requires composer install to have run first. Default: false
+      (legacy v1.x behaviour).
+    required: false
+    default: 'false'
+  # phpstan inputs (always project mode: requires composer install)
+  phpstan_config:
+    description: 'Path to the committed PHPStan config.'
+    required: false
+    default: 'phpstan.neon'
+  phpstan_error_format:
+    description: >-
+      PHPStan error format: "github" (native annotations, default)
+      or "checkstyle" (uses the bundled problem matcher).
+    required: false
+    default: 'github'
+  phpstan_memory_limit:
+    description: 'PHPStan memory limit. Default: "-1"'
+    required: false
+    default: '-1'
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: 'composite'
+  steps:
+    - name: Register problem matchers
+      shell: bash
+      run: echo "::add-matcher::${{ github.action_path }}/problem-matcher.json"
+
+    - name: Setup PHP for bundled phpcs toolchain
+      if: ${{ inputs.tool == 'phpcs' && inputs.use_project_tools != 'true' }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php_version }}
+        coverage: none
+        ini-values: memory_limit=-1
+
+    - name: Install bundled coding standards
+      if: ${{ inputs.tool == 'phpcs' && inputs.use_project_tools != 'true' }}
+      shell: bash
+      run: |
+        composer global config --no-plugins \
+          allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+        composer global require --no-interaction --no-progress \
+          magento/magento-coding-standard:'*' \
+          phpcompatibility/php-compatibility:'*'
+        "$(composer global config home)/vendor/bin/phpcs" -i
+
+    - name: Run PHPCS
+      if: ${{ inputs.tool == 'phpcs' }}
+      shell: bash
+      env:
+        INPUT_PHPCS_STANDARD: ${{ inputs.phpcs_standard }}
+        INPUT_PHPCS_REPORT: ${{ inputs.phpcs_report }}
+        INPUT_PHPCS_SEVERITY: ${{ inputs.phpcs_severity }}
+        INPUT_PHPCS_PATH: ${{ inputs.phpcs_path }}
+        INPUT_PHPCS_EXTENSIONS: ${{ inputs.phpcs_extensions }}
+        USE_PROJECT_TOOLS: ${{ inputs.use_project_tools }}
+      run: ${{ github.action_path }}/scripts/run-phpcs.sh
+
+    - name: Run PHPStan
+      if: ${{ inputs.tool == 'phpstan' }}
+      shell: bash
+      env:
+        PHPSTAN_CONFIG: ${{ inputs.phpstan_config }}
+        PHPSTAN_ERROR_FORMAT: ${{ inputs.phpstan_error_format }}
+        PHPSTAN_MEMORY_LIMIT: ${{ inputs.phpstan_memory_limit }}
+      run: ${{ github.action_path }}/scripts/run-phpstan.sh
+
+    - name: PHPMD (not yet supported)
+      if: ${{ inputs.tool == 'phpmd' }}
+      shell: bash
+      run: |
+        MSG="tool: phpmd is not yet supported"
+        echo "::error::${MSG} - blocked on magic42/ansible#512 (L3)."
+        exit 1
+
+    - name: Unknown tool
+      if: >-
+        ${{ inputs.tool != 'phpcs' && inputs.tool != 'phpstan' &&
+            inputs.tool != 'phpmd' }}
+      shell: bash
+      run: |
+        TOOL="${{ inputs.tool }}"
+        echo "::error::Unknown tool '${TOOL}' (expected phpcs|phpstan|phpmd)."
+        exit 1
 branding:
   icon: 'code'
   color: 'green'
