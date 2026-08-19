@@ -18,6 +18,24 @@
           "loop": true
         }
       ]
+    },
+    {
+      "owner": "phpstan",
+      "severity": "error",
+      "pattern": [
+        {
+          "regexp": "^<file name=\"(?:\\/github\\/workspace\\/)?(.*)\">$",
+          "file": 1
+        },
+        {
+          "regexp": "<error line=\"(\\d*)\" column=\"(\\d*)\" severity=\"(error|warning)\" message=\"(.*)\"",
+          "line": 1,
+          "column": 2,
+          "severity": 3,
+          "message": 4,
+          "loop": true
+        }
+      ]
     }
   ]
 }
