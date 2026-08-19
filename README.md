@@ -1,9 +1,7 @@
 # action-m2-coding-standards
 
 Runs static analysis tools against Magento 2 code as separately
-gateable GitHub Actions jobs. Supports PHPCS and PHPStan; PHPMD is
-pending the shared L3 ruleset (magic42/ansible#512) and fails with an
-explicit error if selected.
+gateable GitHub Actions jobs. Supports PHPCS, PHPStan and PHPMD.
 
 This is a composite action (v2+). The v1.x Docker image is gone: PHPCS
 runs on the runner, and PHPStan runs the project's own
@@ -59,7 +57,7 @@ jobs:
 
 | Input | Default | Notes |
 |---|---|---|
-| `tool` | `phpcs` | `phpcs`, `phpstan` or `phpmd` (phpmd errors until #512). |
+| `tool` | `phpcs` | `phpcs`, `phpstan` or `phpmd`. |
 | `php_version` | `8.3` | PHP for the bundled phpcs toolchain (legacy mode). |
 | `phpcs_standard` | none | Ruleset path or installed standard. Empty = `Magento2` (legacy) or the committed `phpcs.xml.dist` (project mode). |
 | `phpcs_report` | `checkstyle` | Feeds the bundled problem matcher. |
@@ -71,6 +69,9 @@ jobs:
 | `phpstan_config` | `phpstan.neon` | Committed config; it owns the analysis scope (no paths are passed). |
 | `phpstan_error_format` | `github` | `github` = native PR annotations. `checkstyle` uses the bundled matcher instead. |
 | `phpstan_memory_limit` | `-1` | |
+| `phpmd_path` | `app/code/Magic42` | PHPMD takes an explicit path (rulesets do not carry scope). |
+| `phpmd_format` | `github` | `github` = native PR annotations; any PHPMD renderer accepted. |
+| `phpmd_ruleset` | `phpmd.xml` | Committed ruleset; a `phpmd.baseline.xml` beside it is applied automatically. |
 
 ## Modes
 
@@ -101,6 +102,15 @@ formatters such as Magento's `FilteredErrorFormatter` (analysis is
 identical; only output filtering differs). If CI reports errors that
 local filtered runs hide, fold them into the baseline or set
 `phpstan_error_format: checkstyle`.
+
+### PHPMD (project mode only)
+
+Runs the project's `vendor/bin/phpmd` against the committed ruleset
+(default `phpmd.xml`), which should reference the shared magic42 rules.
+PHPMD rulesets do not carry scope, so the path is an input (default
+`app/code/Magic42`). A `phpmd.baseline.xml` next to the ruleset
+(generated with `--generate-baseline`) is applied automatically.
+Requires `composer install` first.
 
 ## Migrating from v1.x
 

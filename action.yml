@@ -1,8 +1,8 @@
 name: 'Magento 2 Coding Standards'
 author: 'magic42'
 description: >-
-  Runs PHPCS or PHPStan against Magento 2 code as separately gateable
-  jobs. PHPMD support is pending (magic42/ansible#512).
+  Runs PHPCS, PHPStan or PHPMD against Magento 2 code as separately
+  gateable jobs.
 inputs:
   tool:
     description: 'Which tool to run: phpcs | phpstan | phpmd.'
@@ -61,6 +61,21 @@ inputs:
     description: 'PHPStan memory limit. Default: "-1"'
     required: false
     default: '-1'
+  # phpmd inputs (always project mode: requires composer install)
+  phpmd_path:
+    description: 'Path PHPMD analyses. Default: "app/code/Magic42"'
+    required: false
+    default: 'app/code/Magic42'
+  phpmd_format:
+    description: >-
+      PHPMD output format: "github" (native annotations, default)
+      or any other PHPMD renderer.
+    required: false
+    default: 'github'
+  phpmd_ruleset:
+    description: 'Path to the committed PHPMD ruleset.'
+    required: false
+    default: 'phpmd.xml'
 runs:
   using: 'composite'
   steps:
@@ -109,13 +124,14 @@ runs:
         PHPSTAN_MEMORY_LIMIT: ${{ inputs.phpstan_memory_limit }}
       run: ${{ github.action_path }}/scripts/run-phpstan.sh
 
-    - name: PHPMD (not yet supported)
+    - name: Run PHPMD
       if: ${{ inputs.tool == 'phpmd' }}
       shell: bash
-      run: |
-        MSG="tool: phpmd is not yet supported"
-        echo "::error::${MSG} - blocked on magic42/ansible#512 (L3)."
-        exit 1
+      env:
+        PHPMD_PATH: ${{ inputs.phpmd_path }}
+        PHPMD_FORMAT: ${{ inputs.phpmd_format }}
+        PHPMD_RULESET: ${{ inputs.phpmd_ruleset }}
+      run: ${{ github.action_path }}/scripts/run-phpmd.sh
 
     - name: Unknown tool
       if: >-
